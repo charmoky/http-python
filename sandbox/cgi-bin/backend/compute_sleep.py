@@ -47,12 +47,6 @@ class sleep_handler:
         f.close()
 
     def add_new_time(self, time_bed_str, date_bed_str, time_up_str, date_up_str):
-        # Assume we went to bed the day before
-        daydiff = datetime.timedelta(days=1)
-        
-        # Get date
-        yesterday = self.today - daydiff
-        
         toBed_time = datetime.datetime(get_year_month_day(date_bed_str)[0], get_year_month_day(date_bed_str)[1], get_year_month_day(date_bed_str)[2], get_hour_min(time_bed_str)[0], get_hour_min(time_bed_str)[1])
         upBed_time = datetime.datetime(get_year_month_day(date_up_str)[0],  get_year_month_day(date_up_str)[1],  get_year_month_day(date_up_str)[2],  get_hour_min(time_up_str)[0],  get_hour_min(time_up_str)[1])
 
