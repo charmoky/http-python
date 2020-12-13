@@ -24,7 +24,9 @@ class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
         dir_sep = collapsed_path.find('/', 1)
         while dir_sep > 0 and not collapsed_path[:dir_sep] in self.cgi_directories:
             dir_sep = collapsed_path.find('/', dir_sep+1)
-        if dir_sep > 0:
+
+        # Treat cgi dir as normal dir
+        if dir_sep > 0 and dir_sep < len(collapsed_path)-1:
             head, tail = collapsed_path[:dir_sep], collapsed_path[dir_sep+1:]
             self.cgi_info = head, tail
             return True

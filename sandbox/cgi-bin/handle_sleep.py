@@ -1,70 +1,71 @@
 #!/usr/bin/env python
 
 import cgi
-import pickle
-import numpy as np
+from backend.compute_sleep import sleep_handler
+import os
+
 import datetime
 
-data_filename = "/Yep/data/sleep_data.pckl"
+def do_GET():
+    today = datetime.datetime.now()
+    daydiff = datetime.timedelta(days=1)
+    yesterday = today - daydiff
+    print("""<!DOCTYPE html>
+    <html>
+    <body>
 
-## Parsing data from the HTTP server
-form = cgi.FieldStorage()
+    <title>Sleep Tracker</title>
 
-toBed = (form.getfirst('toBed', 'empty'))
-upBed = (form.getfirst('upBed', 'empty'))
+    <h2>Good Morning !</h2>
 
-def get_hour_min(time_str):
-    fields = time_str.split(':')
-    return [int(fields[0]), int(fields[1])]
+    <form action="/sandbox/cgi-bin/handle_sleep.py" method="post">
+    <label for="toBed_time">Asleep  at:</label><br>
+    <input type="time" id="toBed_time" name="toBed_time" value="22:30" required>
+    <label for="toBed_date"></label>
+    <input type="date" id="toBed_date" name="toBed_date" value="%s-%s-%s" required><br>
 
+    <label for="upBed_time">Woken at:</label><br>
+    <input type="time" id="upBed_time" name="upBed_time" value="%s:%s" required>
+    <label for="upBed_date"></label>
+    <input type="date" id="upBed_date" name="upBed_date" value="%s-%s-%s" required><br><br>
 
-# Assume we went to bed the day before
-daydiff = datetime.timedelta(days=1)
+    <input type="submit" value="Submit">
+    </form>
 
-# Get date
-today = datetime.date.today()
-yesterday = today - daydiff
+    </body>
+    </html>""" % (str(today.year), str(today.month), str(yesterday.day), str(today.hour), str(today.minute), str(today.year), str(today.month), str(today.day)))
 
-toBed_time = datetime.datetime(yesterday.year, yesterday.month, yesterday.day, get_hour_min(toBed)[0], get_hour_min(toBed)[1])
-upBed_time = datetime.datetime(today.year, today.month, today.day, get_hour_min(upBed)[0], get_hour_min(upBed)[1])
+def do_POST():
+    ## Parsing data from the HTTP server
+    form = cgi.FieldStorage()
 
-asleep = upBed_time - toBed_time
+    toBed_time = (form.getfirst('toBed_time', 'empty'))
+    upBed_time = (form.getfirst('upBed_time', 'empty'))
+    toBed_date = (form.getfirst('toBed_date', 'empty'))
+    upBed_date = (form.getfirst('upBed_date', 'empty'))
 
-asleep_hours, asleep_minutes = divmod(divmod(asleep.seconds, 60)[0], 60)
+    hlr = sleep_handler()
 
-asleep_stored = asleep_hours * 60 + asleep_minutes
-try:
-    f = open(data_filename ,'rb')
-    dic = pickle.load(f)
-    f.close()
-except IOError:
-    # No data yet, create empty dataframe
-    dic = {'Date' : [], 'Asleep' : [], 'Woke' : [], 'Sleep' : []}
+    hlr.add_new_time(time_bed_str=toBed_time, date_bed_str=toBed_date, time_up_str=upBed_time, date_up_str=upBed_date)
+    hlr.gen_graph_last_7days()
 
-def update_dic(colname, data):
-    dic[colname].append(data)
+    print ("Content-Type: text/html")
+    print("")
+    print ("<html><body>")
+    print ("<h2>Good morning !</h2>")
+    print ("<p>")
+    print ("Slept for %sh%s : went to bed at %s, woke up at %s" % (str(hlr.get_time_slept()[0]), str(hlr.get_time_slept()[1]), str(toBed_time), str(upBed_time)))
+    print("</p>")
+    print ("<p>")
+    print("Last week average is %sh%s" % (str(hlr.get_average()[0]), str(hlr.get_average()[1])))
+    print("</p>")
+    print("<img src=\"%s\" alt=\"Last 7 days average\" width=\"800\" height=\"600\">" % hlr.get_fig_name())
+    print("</body></html>")
 
-update_dic('Date', today)
-update_dic('Asleep', toBed_time)
-update_dic('Woke', upBed_time)
-update_dic('Sleep', asleep_stored)
+    hlr.save_data()
 
-print ("Content-Type: text/html")
-print("")
-print ("<html><body>")
-print ("<h2>Good morning !</h2>")
-print ("<p>")
-print ("Today is %s" % str(today))
-print ("</p>")
-print ("<p>")
-print ("Sleep for %sh%s : went to bed at %s, woke up at %s" % (str(asleep_hours), str(asleep_minutes), str(toBed_time), str(upBed_time)))
-print("</p>")
-print ("<p>")
-print(dic)
-print("</p>")
-print("</body></html>")
-
-f = open(data_filename, 'wb')
-pickle.dump(dic, f)
-f.close()
+if os.environ['REQUEST_METHOD'] == "GET":
+    do_GET()
+else:
+    do_POST()
 
