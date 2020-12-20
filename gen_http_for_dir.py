@@ -71,6 +71,11 @@ class Index_Generator:
           width: 100%;
           height: auto;
         }
+        
+        div.gallery video {
+          width: 100%;
+          height: auto;
+        }
 
         div.desc {
           padding: 15px;
@@ -90,29 +95,33 @@ class Index_Generator:
 
         f.write("<h2> Directory List:</h2>\n")
         f.write("<a href=\"../\">../</a>\n")
-        if len(self.dir) > 1:
+        if len(self.dir) > 0:
             for dir in self.dir:
                 f.write("<a href=\"%s\">%s</a>\n" % (dir, dir))
             
             for file in self.file:
                 f.write("<a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">%s</a>\n" % (file, file))
+        
+        f.write("<br>")
 
-        if len(self.img) > 1:
+        if len(self.img) > 0:
             f.write("<h2> Image Gallery:</h2>\n")
             for img in self.img:
                 f.write("""<div class="gallery">""")
                 f.write("<a href=\"{0}\" target=\"_blank\" rel=\"noopener noreferrer\"> <img alt=\"{0}\" src=\"{0}\"></a>".format(img))
                 f.write("""</div>""")
+                f.write("<br>")
 
-        if len(self.vid) > 1:
+        if len(self.vid) > 0:
             f.write("<h2> Video Gallery:</h2>\n")
             for vid in self.vid:
                 f.write("""<div class="gallery">""")
-                f.write("<video controls> <source src=\"{0}\" type=\"video/{1}\">".format(vid[0], vid[1]))
+                f.write("<video controls> <source src=\"{0}\" type=\"video/{1}\"> </video>".format(vid[0], vid[1]))
+                f.write("<div class=\"desc\">%s</div>" % vid[0])
                 f.write("""</div>""")
+            f.write("<br>")
 
         f.write("""</pre>
-        <hr>
         </body>
         </html>
         """)
