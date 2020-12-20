@@ -4,7 +4,7 @@ import os
 import argparse
 
 img_types = [".jpg", ".jpeg", ".png", ".gif"]
-vid_types = [".mp4", ".webm"]
+vid_types = [".mp4", ".webm", ".mov"]
 
 def gen_img_dir_list(path):
     img_list = []
@@ -56,6 +56,13 @@ class Index_Generator:
         <title>Index of %s</title>
         """ % (web_relative))
         f.write("""<style>
+		/* Clear floats after the columns */
+		.row:after {
+		  content: "";
+		  display: table;
+		  clear: both;
+		}
+
         div.gallery {
           margin: 5px;
           border: 1px solid #ccc;
@@ -93,6 +100,7 @@ class Index_Generator:
         <pre>
         """)
 
+        f.write("<div class=\"row\">")
         f.write("<h2> Directory List:</h2>\n")
         f.write("<a href=\"../\">../</a>\n")
         if len(self.dir) > 0:
@@ -102,26 +110,32 @@ class Index_Generator:
             for file in self.file:
                 f.write("<a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">%s</a>\n" % (file, file))
         
+        f.write("</div>")
         f.write("<br>")
 
         if len(self.img) > 0:
+            f.write("<div class=\"row\">")
             f.write("<h2> Image Gallery:</h2>\n")
             for img in self.img:
                 f.write("""<div class="gallery">""")
                 f.write("<a href=\"{0}\" target=\"_blank\" rel=\"noopener noreferrer\"> <img alt=\"{0}\" src=\"{0}\"></a>".format(img))
                 f.write("""</div>""")
-                f.write("<br>")
+            f.write("</div>")
+            f.write("<br>")
 
         if len(self.vid) > 0:
+            f.write("<div class=\"row\">")
             f.write("<h2> Video Gallery:</h2>\n")
             for vid in self.vid:
                 f.write("""<div class="gallery">""")
                 f.write("<video controls> <source src=\"{0}\" type=\"video/{1}\"> </video>".format(vid[0], vid[1]))
                 f.write("<div class=\"desc\">%s</div>" % vid[0])
                 f.write("""</div>""")
+            f.write("</div>")
             f.write("<br>")
 
         f.write("""</pre>
+        <hr>
         </body>
         </html>
         """)
@@ -152,5 +166,6 @@ if __name__ == "__main__":
                     exit(0)
     else:
         generator = Index_Generator(args.path)
+        print("Generating index for %s" % args.path) 
         generator.gen_index(args.rel_path)
 
