@@ -3,8 +3,17 @@ import os
 import copy
 import urllib.parse
 import select
+import html
+import sys
+import io
 
 from http import HTTPStatus
+
+from thumbnail_generator import thumb_gen
+
+img_types = [".jpeg", ".gif"]
+comp_imag_types = [".jpg", ".png"]
+vid_types = [".mp4", ".webm", ".mov"]
 
 class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
     cgi_directories = ['/sandbox/cgi-bin']
@@ -63,20 +72,20 @@ class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
         scriptfile = self.translate_path(scriptname)
         if not os.path.exists(scriptfile):
             self.send_error(
-                HTTPStatus.NOT_FOUND,
-                "No such CGI script (%r)" % scriptname)
+                    HTTPStatus.NOT_FOUND,
+                    "No such CGI script (%r)" % scriptname)
             return
         if not os.path.isfile(scriptfile):
             self.send_error(
-                HTTPStatus.FORBIDDEN,
-                "CGI script is not a plain file (%r)" % scriptname)
+                    HTTPStatus.FORBIDDEN,
+                    "CGI script is not a plain file (%r)" % scriptname)
             return
         ispy = self.is_python(scriptname)
         if self.have_fork or not ispy:
             if not self.is_executable(scriptfile):
                 self.send_error(
-                    HTTPStatus.FORBIDDEN,
-                    "CGI script is not executable (%r)" % scriptname)
+                        HTTPStatus.FORBIDDEN,
+                        "CGI script is not executable (%r)" % scriptname)
                 return
 
         # Reference: http://hoohoo.ncsa.uiuc.edu/cgi/env.html
@@ -105,7 +114,7 @@ class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
                     try:
                         authorization = authorization[1].encode('ascii')
                         authorization = base64.decodebytes(authorization).\
-                                        decode('ascii')
+                                decode('ascii')
                     except (binascii.Error, UnicodeError):
                         pass
                     else:
@@ -136,7 +145,7 @@ class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
         # Since we're setting the env in the parent, provide empty
         # values to override previously set values
         for k in ('QUERY_STRING', 'REMOTE_HOST', 'CONTENT_LENGTH',
-                  'HTTP_USER_AGENT', 'HTTP_COOKIE', 'HTTP_REFERER'):
+                'HTTP_USER_AGENT', 'HTTP_COOKIE', 'HTTP_REFERER'):
             env.setdefault(k, "")
 
         self.send_response(HTTPStatus.OK, "Script output follows")
@@ -175,8 +184,8 @@ class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
                 print("End of child")
                 print(self.wfile)
             except:
-               self.server.handle_error(self.request, self.client_address)
-               os._exit(127)
+                self.server.handle_error(self.request, self.client_address)
+                os._exit(127)
 
         else:
             # Non-Unix -- use subprocess
@@ -196,11 +205,11 @@ class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
             except (TypeError, ValueError):
                 nbytes = 0
             p = subprocess.Popen(cmdline,
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 env = env
-                                 )
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    env = env
+                    )
             if self.command.lower() == "post" and nbytes > 0:
                 data = self.rfile.read(nbytes)
             else:
@@ -221,3 +230,177 @@ class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
             else:
                 self.log_message("CGI script exited OK")
 
+
+    def make_file_lists(self, path):
+        self.img_list = []
+        self.comp_img_list = []
+        self.vid_list = []
+        self.file_list = []
+        self.dir_list = []
+
+        for entry in  os.scandir(path):
+            if entry.is_file():
+
+                #Ignore "hidden" files
+                if entry.name.startswith("."):
+                    continue
+
+                # is image ?
+                if os.path.splitext(entry.name)[1].lower() in comp_imag_types:
+                    self.comp_img_list.append(entry.name)
+                    continue
+
+                if os.path.splitext(entry.name)[1].lower() in img_types:
+                    self.img_list.append(entry.name)
+                    continue
+
+                # is vid ?
+                if os.path.splitext(entry.name)[1].lower() in vid_types:
+                    self.vid_list.append((entry.name, os.path.splitext(entry.name)[1].lower()[1:]))
+                    continue
+
+                # Skip html files
+                if os.path.splitext(entry.name)[1].lower() == ".html":
+                    continue
+
+                self.file_list.append(entry.name)
+
+            # Else add to dir list
+            else:
+                #Ignore "hidden" dirs 
+                if entry.name.startswith("."):
+                    continue
+                self.dir_list.append(entry.name + "/")
+
+
+    def list_directory(self, path):
+        """Helper to produce a directory listing (absent index.html).
+        Return value is either a file object, or None (indicating an
+        error).  In either case, the headers are sent, making the
+        interface the same as for send_head().
+        """
+        try:
+            list = os.listdir(path)
+        except OSError:
+            self.send_error(
+                    HTTPStatus.NOT_FOUND,
+                    "No permission to list directory")
+            return None
+        list.sort(key=lambda a: a.lower())
+        r = []
+        try:
+            displaypath = urllib.parse.unquote(self.path,
+                    errors='surrogatepass')
+        except UnicodeDecodeError:
+            displaypath = urllib.parse.unquote(path)
+        displaypath = html.escape(displaypath, quote=False)
+        enc = sys.getfilesystemencoding()
+
+        self.make_file_lists(path)
+
+        Gen_thumb = thumb_gen(path)
+        Gen_thumb.make_thumbnails()
+
+        title = 'Directory listing for %s' % displaypath
+        r.append('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" '
+                '"http://www.w3.org/TR/html4/strict.dtd">')
+        r.append('<html>\n<head>')
+        r.append('<meta http-equiv="Content-Type" '
+                'content="text/html; charset=%s">' % enc)
+        r.append("""<style>
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+div.gallery {
+  margin: 5px;
+  border: 1px solid #ccc;
+  float: left;
+  width: 180px;
+}
+
+div.vid_gallery {
+  margin: 5px;
+  border: 1px solid #ccc;
+  float: left;
+  width: 480px;
+}
+
+div.gallery:hover {
+  border: 1px solid #777;
+}
+
+div.gallery img {
+  width: 100%;
+  height: auto;
+}
+
+div.vid_gallery video {
+  width: 100%;
+  height: auto;
+}
+
+div.desc {
+  padding: 15px;
+  text-align: center;
+}
+</style>""")
+
+        r.append('<title>%s</title>\n</head>' % title)
+        r.append('<body>\n<h1>%s</h1>' % title)
+        r.append('<hr>\n<ul>')
+
+        r.append("<div class=\"row\">")
+        r.append("<h2> Directory List:</h2>\n")
+        r.append("<li><a href=\"../\">../</a></li>\n")
+        if len(self.dir_list) > 0:
+            for dir in self.dir_list:
+                r.append("<li><a href=\"%s\">%s</a></li>\n" % (dir, dir))
+        
+        if len(self.file_list) > 0:
+            for file in self.file_list:
+                r.append("<li><a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">%s</a></li>\n" % (file, file))
+        r.append("</div>")
+        r.append("<br>")
+
+        if (len(self.img_list) > 0) or (len(self.comp_img_list) >0):
+            r.append("<div class=\"row\">")
+            r.append("<h2> Image Gallery:</h2>\n")
+            for img in self.img_list:
+                r.append("""<div class="gallery">""")
+                r.append("<a href=\"{0}\" target=\"_blank\" rel=\"noopener noreferrer\"> <img alt=\"{0}\" src=\"{0}\"></a>".format(img))
+                r.append("""</div>""")
+
+            # Compressed images : link to real photo, display thumbnails
+            for img in self.comp_img_list:
+                r.append("""<div class="gallery">""")
+                r.append("<a href=\"{0}\" target=\"_blank\" rel=\"noopener noreferrer\"> <img alt=\"{0}\" src=\".thumbnails/{0}\"></a>".format(img))
+                r.append("""</div>""")
+
+            r.append("</div>")
+            r.append("<br>")
+
+        if len(self.vid_list) > 0:
+            r.append("<div class=\"row\">")
+            r.append("<h2> Video Gallery:</h2>\n")
+            for vid in self.vid_list:
+                r.append("""<div class="vid_gallery">""")
+                r.append("<video controls> <source src=\"{0}\" type=\"video/{1}\"> </video>".format(vid[0], vid[1]))
+                r.append("<div class=\"desc\">%s</div>" % vid[0])
+                r.append("""</div>""")
+            r.append("</div>")
+            r.append("<br>")
+
+        r.append('</ul>\n<hr>\n</body>\n</html>\n')
+        encoded = '\n'.join(r).encode(enc, 'surrogateescape')
+        f = io.BytesIO()
+        f.write(encoded)
+        f.seek(0)
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-type", "text/html; charset=%s" % enc)
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        return f

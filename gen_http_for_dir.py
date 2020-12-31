@@ -47,7 +47,6 @@ class Index_Generator:
         self.path = path
         self.img, self.vid, self.file, self.dir = gen_img_dir_list(path)
 
-
     def gen_index(self, web_relative):
         f = open(self.path + "/index.html", 'w')
 
@@ -106,7 +105,8 @@ class Index_Generator:
         if len(self.dir) > 0:
             for dir in self.dir:
                 f.write("<a href=\"%s\">%s</a>\n" % (dir, dir))
-            
+        
+        if len(self.file) > 0:
             for file in self.file:
                 f.write("<a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">%s</a>\n" % (file, file))
         
@@ -156,6 +156,12 @@ if __name__ == "__main__":
         args.rel_path = args.path
 
     if args.recursive:
+        path = args.path
+        print("Generating index for %s" % path) 
+        generator = Index_Generator(path)
+        if generator.gen_index(path) != 0:
+            exit(0)
+
         for root, dirs, files in os.walk(args.path, followlinks=True):
             for name in dirs:
                 path = os.path.join(root, name)
