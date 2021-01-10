@@ -6,6 +6,12 @@ import os
 
 import datetime
 
+def get_date_string_plus_0(date):
+    if date >= 10:
+        return str(date)
+    else:
+        return "0" + str(date)
+
 def do_GET():
     today = datetime.datetime.now()
     daydiff = datetime.timedelta(days=1)
@@ -33,7 +39,7 @@ def do_GET():
     </form>
 
     </body>
-    </html>""" % (str(today.year), str(today.month), str(yesterday.day), str(today.hour), str(today.minute), str(today.year), str(today.month), str(today.day)))
+    </html>""" % (str(today.year), get_date_string_plus_0(today.month), get_date_string_plus_0(yesterday.day), get_date_string_plus_0(today.hour), get_date_string_plus_0(today.minute), str(today.year), get_date_string_plus_0(today.month), get_date_string_plus_0(today.day)))
 
 def do_POST():
     ## Parsing data from the HTTP server

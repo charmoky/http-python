@@ -11,8 +11,8 @@ from http import HTTPStatus
 
 from thumbnail_generator import thumb_gen
 
-img_types = [".jpeg", ".gif"]
-comp_imag_types = [".jpg", ".png"]
+img_types = [".gif"]
+comp_imag_types = [".jpg", ".jpeg", ".png"]
 vid_types = [".mp4", ".webm", ".mov"]
 
 class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
@@ -272,6 +272,11 @@ class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
                     continue
                 self.dir_list.append(entry.name + "/")
 
+        self.comp_img_list = sorted(self.comp_img_list)
+        self.dir_list = sorted(self.dir_list)
+        self.file_list = sorted(self.file_list)
+        self.vid_list = sorted(self.vid_list)
+        self.img_list = sorted(self.img_list)
 
     def list_directory(self, path):
         """Helper to produce a directory listing (absent index.html).

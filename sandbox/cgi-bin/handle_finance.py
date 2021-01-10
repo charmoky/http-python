@@ -7,6 +7,12 @@ from backend.compute_expense import exp_handler
 
 import datetime
 
+def get_date_string_plus_0(date):
+    if date >= 10:
+        return str(date)
+    else:
+        return "0" + str(date)
+
 def gen_http_select_type(types_list):
     for i in types_list:
         print("<option value=\"%s\"> %s</option>" % (i, i))
@@ -30,7 +36,7 @@ def do_GET(types_list):
     <input type="date" id="date" name="date" value="%s-%s-%s" required><br>
 
     <label for="type">Type :</label>
-    <select name="type" id="type" required>""" % (str(today.year), str(today.month), str(today.day)))
+    <select name="type" id="type" required>""" % (str(today.year), get_date_string_plus_0(today.month), get_date_string_plus_0(today.day)))
 
     gen_http_select_type(types_list)
 
