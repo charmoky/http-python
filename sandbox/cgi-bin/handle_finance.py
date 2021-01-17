@@ -7,6 +7,11 @@ from backend.compute_expense import exp_handler
 
 import datetime
 
+if "REMOTE_USER" in os.environ.keys():
+    user = os.environ["REMOTE_USER"]
+else:
+    user = "Anon"
+
 def get_date_string_plus_0(date):
     if date >= 10:
         return str(date)
@@ -17,7 +22,7 @@ def gen_http_select_type(types_list):
     for i in types_list:
         print("<option value=\"%s\"> %s</option>" % (i, i))
 
-def do_GET(types_list):
+def do_GET(types_list, method_list):
     today = datetime.datetime.now()
     print("""<!DOCTYPE html>
     <html>
@@ -25,7 +30,7 @@ def do_GET(types_list):
 
     <title>Expense Tracker</title>
 
-    <h2>New Expense ?</h2>
+    <h2>Hello %s ! New Expense ?</h2>
 
     <form action="/sandbox/cgi-bin/handle_finance.py" method="post">
 
@@ -33,15 +38,22 @@ def do_GET(types_list):
     <input type="float" id="amount" name="amount" required><br>
 
     <label for="date">Date :</label>
-    <input type="date" id="date" name="date" value="%s-%s-%s" required><br>
+    <input type="date" id="date" name="date" value="%s-%s-%s" required><br>""" % (user, str(today.year), get_date_string_plus_0(today.month), get_date_string_plus_0(today.day)))
 
+    print("""
     <label for="type">Type :</label>
-    <select name="type" id="type" required>""" % (str(today.year), get_date_string_plus_0(today.month), get_date_string_plus_0(today.day)))
+    <select name="type" id="type" required>""")
 
     gen_http_select_type(types_list)
+    print("</select><br>")
 
-    print("""</select><br>
-    <br>
+    print("""
+    <label for="method">Pay Method :</label>
+    <select name="method" id="method" required>""")
+    gen_http_select_type(method_list)
+    print("</select><br>")
+
+    print("""<br>
     <input type="submit" value="Submit">
     </form>
 
@@ -54,13 +66,15 @@ def do_POST(hlr):
 
     date = (form.getfirst('date', 'empty'))
     exp_type = (form.getfirst('type', 'empty'))
-    amount = (form.getfirst('amount', 'empty'))
+    exp_method = (form.getfirst('method', 'empty'))
+    amount = (form.getfirst('amount', 'empty')).replace(",",".")
 
-    hlr.add_new_exp(date_str=date, amount_float=float(amount), exp_type=exp_type)
+    hlr.add_new_exp(date_str=date, amount_float=float(amount), exp_type=exp_type, pay_method=exp_method)
 
     print ("Content-Type: text/html")
     print("")
     print ("<html><body>")
+    print ("<title>Expense Tracker</title>")
     print ("<h2>New Expense taken into account !</h2>")
     print ("<p>")
     print ("Spent %.1f euros on %s" % (float(amount), exp_type))
@@ -70,10 +84,10 @@ def do_POST(hlr):
 
     hlr.save_data()
 
-hlr = exp_handler()
+hlr = exp_handler(all)
 
 if os.environ['REQUEST_METHOD'] == "GET":
-    do_GET(hlr.get_types())
+    do_GET(hlr.get_types(), hlr.get_pay_methods())
 else:
     do_POST(hlr)
 

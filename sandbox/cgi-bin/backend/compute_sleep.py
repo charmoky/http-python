@@ -6,8 +6,8 @@ import pickle
 import numpy as np
 import datetime
 
-data_filename = "/Yep/data/sleep_data.pckl"
-fig_name = "sandbox/figures/%s.png"
+data_filename = "/Yep/data/sleep_data_%s.pckl"
+fig_name = "sandbox/figures/%s_%s.png"
 
 def get_hour_min(time_str):
     fields = time_str.split(':')
@@ -21,12 +21,14 @@ def format_minutes_graph(x, pos):
     return "%dh%d" % divmod(x, 60)
 
 class sleep_handler:
-    def __init__(self):
+    def __init__(self,user):
+        self.user = user
         self.today = datetime.date.today()
         self.asleep_hours = 0
         self.asleep_minutes = 0
+        self.mean_sleep = 0
         try:
-            f = open(data_filename, 'rb')
+            f = open(data_filename % self.user, 'rb')
             self.dic = pickle.load(f)
             f.close()
         except IOError:
@@ -42,7 +44,7 @@ class sleep_handler:
         return [self.asleep_hours, self.asleep_minutes]
 
     def save_data(self):
-        f = open(data_filename, 'wb')
+        f = open(data_filename % self.user, 'wb')
         pickle.dump(self.dic, f)
         f.close()
 
@@ -95,7 +97,7 @@ class sleep_handler:
         axs.axhline(y=self.mean_sleep, color='0.5', linestyle='--')
         
         fig.suptitle("Sleep time")
-        fig.savefig(fig_name % str(self.today), dpi=200)
+        fig.savefig(fig_name % (self.user, str(self.today)), dpi=200)
 
     def get_fig_name(self):
-        return ("/" + fig_name % self.today)
+        return ("/" + fig_name % (self.user, self.today))

@@ -26,17 +26,20 @@ class thumb_gen():
             
             print("Making thumbnail for {}".format(image))
             img = Image.open(self.path + image)
+           
+            try:
+                for orientation in ExifTags.TAGS.keys() : 
+                    if ExifTags.TAGS[orientation]=='Orientation' : break 
+                exif=dict(img._getexif().items())
             
-            for orientation in ExifTags.TAGS.keys() : 
-                if ExifTags.TAGS[orientation]=='Orientation' : break 
-            exif=dict(img._getexif().items())
-            
-            if   exif[orientation] == 3 : 
-                img=img.rotate(180, expand=True)
-            elif exif[orientation] == 6 : 
-                img=img.rotate(270, expand=True)
-            elif exif[orientation] == 8 : 
-                img=img.rotate(90, expand=True)
+                if   exif[orientation] == 3 : 
+                    img=img.rotate(180, expand=True)
+                elif exif[orientation] == 6 : 
+                    img=img.rotate(270, expand=True)
+                elif exif[orientation] == 8 : 
+                    img=img.rotate(90, expand=True)
+            except:
+                pass
 
             img.thumbnail(size)
             img.save(self.path + "/.thumbnails/" + image)
