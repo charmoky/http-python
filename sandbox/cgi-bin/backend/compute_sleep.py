@@ -41,12 +41,17 @@ class sleep_handler:
     def update_dic(self, colname, data):
         self.dic[colname].append(data)
 
+    def get_dic(self):
+        return self.dic
+
     def get_time_slept(self):
         return [self.asleep_hours, self.asleep_minutes]
 
-    def save_data(self):
+    def save_data(self, dic=None):
+        if dic is None:
+            dic = self.dic
         f = open(data_filename % self.user, 'wb')
-        pickle.dump(self.dic, f)
+        pickle.dump(dic, f)
         f.close()
         os.sync()
 
@@ -96,7 +101,7 @@ class sleep_handler:
         axs.set_xticklabels(days)
         axs.set_xlabel('Day of the week')
         
-        axs.axhline(y=self.mean_sleep, color='0.5', linestyle='--', label="Avg: %dh%d" % (self.mean_sleep/60, divmod(self.mean_sleep, 60)))
+        axs.axhline(y=self.mean_sleep, color='0.5', linestyle='--', label="Avg: %dh%d" % (divmod(self.mean_sleep, 60)))
         
         axs.legend()
         fig.suptitle("Last 7 days sleep time")

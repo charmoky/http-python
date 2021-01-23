@@ -70,11 +70,13 @@ class exp_shower:
         ind = np.arange(7)
         last_7days_trans = np.transpose(self.last_7days)
         fig, ax = plt.subplots()
+        bottom=np.zeros(7)
         for i, exp_type in enumerate(self.types):
             if last_7days_trans[i].sum() == 0:
                 continue
         
-            ax.bar(ind, last_7days_trans[i].tolist(), label=exp_type)
+            ax.bar(ind, last_7days_trans[i].tolist(), bottom=bottom.tolist(), label=exp_type)
+            bottom += last_7days_trans[i]
         
         mean = self.last_7days.sum(axis=1).mean()
         ax.axhline(y=mean, color='0.5', linestyle='--', label="Avg: %.2f€" % mean)

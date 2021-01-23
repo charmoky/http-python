@@ -78,6 +78,8 @@ def do_GET(hlr, shw):
 
     gen_http_form(types_list, method_list, benef_list)
     show_graphs()
+    
+    print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_finance.py'\">Edit expenses data</button>")
 
     print("""</body>
     </html>""")
@@ -106,6 +108,7 @@ def do_POST(hlr, shw):
     
     gen_http_form(hlr.get_types(), hlr.get_pay_methods(), hlr.get_benefs())
     show_graphs()
+    print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_finance.py'\">Edit expenses data</button>")
 
     hlr.save_data()
 

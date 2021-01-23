@@ -18,6 +18,7 @@ def get_date_string_plus_0(date):
         return "0" + str(date)
 
 def do_GET(hlr):
+    hlr.gen_graph_last_7days()
     today = datetime.datetime.now()
     daydiff = datetime.timedelta(days=1)
     yesterday = today - daydiff
@@ -45,6 +46,7 @@ def do_GET(hlr):
 
     print("<img src=\"%s\" alt=\"Last 7 days average\" width=\"800\" height=\"600\">" % hlr.get_fig_name())
 
+    print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_sleep.py'\">Edit sleep data</button>")
     print("""</body>
     </html>""")
 
@@ -73,6 +75,9 @@ def do_POST(hlr):
     print("Last week average is %sh%s" % (str(hlr.get_average()[0]), str(hlr.get_average()[1])))
     print("</p>")
     print("<img src=\"%s\" alt=\"Last 7 days average\" width=\"800\" height=\"600\">" % hlr.get_fig_name())
+    print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_sleep.py'\">Edit sleep data</button>")
+    print("""</body>
+    </html>""")
 
     hlr.save_data()
 

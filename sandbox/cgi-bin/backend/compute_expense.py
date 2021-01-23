@@ -40,9 +40,11 @@ class exp_handler:
     def get_dic(self):
         return self.dic
 
-    def save_data(self):
+    def save_data(self, dic=None):
+        if dic is None:
+            dic = self.dic
         f = open(data_filename % self.user, 'wb')
-        pickle.dump(self.dic, f)
+        pickle.dump(dic, f)
         f.close()
         os.sync()
 
