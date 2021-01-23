@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 
 data_filename = "/Yep/data/sleep_data_%s.pckl"
-fig_name = "sandbox/figures/%s_%s.png"
+fig_name = "sandbox/figures/sleep_%s_%s.png"
 
 def get_hour_min(time_str):
     fields = time_str.split(':')
@@ -94,10 +94,11 @@ class sleep_handler:
         axs.set_xticklabels(days)
         axs.set_xlabel('Day of the week')
         
-        axs.axhline(y=self.mean_sleep, color='0.5', linestyle='--')
+        axs.axhline(y=self.mean_sleep, color='0.5', linestyle='--', label="Avg: %dh%d" % (self.mean_sleep/60, divmod(self.mean_sleep, 60)))
         
-        fig.suptitle("Sleep time")
-        fig.savefig(fig_name % (self.user, str(self.today)), dpi=200)
+        axs.legend()
+        fig.suptitle("Last 7 days sleep time")
+        fig.savefig(fig_name % (self.user, ""), dpi=200)
 
     def get_fig_name(self):
-        return ("/" + fig_name % (self.user, self.today))
+        return ("/" + fig_name % (self.user, ""))

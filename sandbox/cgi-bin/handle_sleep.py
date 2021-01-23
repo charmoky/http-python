@@ -17,7 +17,7 @@ def get_date_string_plus_0(date):
     else:
         return "0" + str(date)
 
-def do_GET():
+def do_GET(hlr):
     today = datetime.datetime.now()
     daydiff = datetime.timedelta(days=1)
     yesterday = today - daydiff
@@ -41,12 +41,14 @@ def do_GET():
     <input type="date" id="upBed_date" name="upBed_date" value="%s-%s-%s" required><br><br>
 
     <input type="submit" value="Submit">
-    </form>
+    </form>""" % (user,str(today.year), get_date_string_plus_0(today.month), get_date_string_plus_0(yesterday.day), get_date_string_plus_0(today.hour), get_date_string_plus_0(today.minute), str(today.year), get_date_string_plus_0(today.month), get_date_string_plus_0(today.day)))
 
-    </body>
-    </html>""" % (user,str(today.year), get_date_string_plus_0(today.month), get_date_string_plus_0(yesterday.day), get_date_string_plus_0(today.hour), get_date_string_plus_0(today.minute), str(today.year), get_date_string_plus_0(today.month), get_date_string_plus_0(today.day)))
+    print("<img src=\"%s\" alt=\"Last 7 days average\" width=\"800\" height=\"600\">" % hlr.get_fig_name())
 
-def do_POST():
+    print("""</body>
+    </html>""")
+
+def do_POST(hlr):
     ## Parsing data from the HTTP server
     form = cgi.FieldStorage()
 
@@ -55,7 +57,6 @@ def do_POST():
     toBed_date = (form.getfirst('toBed_date', 'empty'))
     upBed_date = (form.getfirst('upBed_date', 'empty'))
 
-    hlr = sleep_handler(user)
 
     hlr.add_new_time(time_bed_str=toBed_time, date_bed_str=toBed_date, time_up_str=upBed_time, date_up_str=upBed_date)
     hlr.gen_graph_last_7days()
@@ -75,8 +76,9 @@ def do_POST():
 
     hlr.save_data()
 
+hlr = sleep_handler(user)
 if os.environ['REQUEST_METHOD'] == "GET":
-    do_GET()
+    do_GET(hlr)
 else:
-    do_POST()
+    do_POST(hlr)
 
