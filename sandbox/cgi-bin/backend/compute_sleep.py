@@ -5,6 +5,7 @@ from matplotlib.ticker import FuncFormatter
 import pickle
 import numpy as np
 import datetime
+import os
 
 data_filename = "/Yep/data/sleep_data_%s.pckl"
 fig_name = "sandbox/figures/sleep_%s_%s.png"
@@ -47,6 +48,7 @@ class sleep_handler:
         f = open(data_filename % self.user, 'wb')
         pickle.dump(self.dic, f)
         f.close()
+        os.sync()
 
     def add_new_time(self, time_bed_str, date_bed_str, time_up_str, date_up_str):
         toBed_time = datetime.datetime(get_year_month_day(date_bed_str)[0], get_year_month_day(date_bed_str)[1], get_year_month_day(date_bed_str)[2], get_hour_min(time_bed_str)[0], get_hour_min(time_bed_str)[1])

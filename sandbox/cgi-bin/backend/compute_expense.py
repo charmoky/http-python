@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import pickle
+import datetime
+import numpy as np
+import os
 
 data_filename = "/Yep/data/exp_data_%s.pckl"
 
@@ -41,6 +44,7 @@ class exp_handler:
         f = open(data_filename % self.user, 'wb')
         pickle.dump(self.dic, f)
         f.close()
+        os.sync()
 
     def add_new_exp(self, date_str, amount_float, exp_type, pay_method, benef):
         self.today = datetime.date(get_year_month_day(date_str)[0], get_year_month_day(date_str)[1], get_year_month_day(date_str)[2])
