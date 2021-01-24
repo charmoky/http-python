@@ -57,14 +57,17 @@ def gen_http_form(types_list, method_list, benef_list):
     <input type="submit" value="Submit">
     </form>""")
 
-def show_graphs():
+def show_graphs(shw):
     print("<h3> Small recap on last 7 days expenses :</h3>")
     print("<img src=\"%s\" alt=\"Last 7 days\" width=\"800\" height=\"600\">" % shw.get_fig_name()[0])
     print("<h3> For this month and year :</h3>")
     print("<img src=\"%s\" alt=\"Last month\" width=\"800\" height=\"600\">" % shw.get_fig_name()[1])
     print("<img src=\"%s\" alt=\"Last year\" width=\"800\" height=\"600\">" % shw.get_fig_name()[2])
 
-def do_GET(hlr, shw):
+def do_GET(hlr):
+    shw = exp_shower(user, hlr.get_dic(), hlr.get_types(), hlr.get_pay_methods())
+    shw.gen_charts()
+
     types_list = hlr.get_types()
     method_list = hlr.get_pay_methods()
     benef_list = hlr.get_benefs()
@@ -77,14 +80,14 @@ def do_GET(hlr, shw):
     <h2>Hello %s ! New Expense ?</h2>""" % user)
 
     gen_http_form(types_list, method_list, benef_list)
-    show_graphs()
+    show_graphs(shw)
     
     print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_finance.py'\">Edit expenses data</button>")
 
     print("""</body>
     </html>""")
 
-def do_POST(hlr, shw):
+def do_POST(hlr):
     ## Parsing data from the HTTP server
     form = cgi.FieldStorage()
 
@@ -93,8 +96,11 @@ def do_POST(hlr, shw):
     exp_method = (form.getfirst('method', 'empty'))
     benef = (form.getfirst('benef', 'empty'))
     amount = (form.getfirst('amount', 'empty')).replace(",",".")
-
+    
     hlr.add_new_exp(date_str=date, amount_float=float(amount), exp_type=exp_type, pay_method=exp_method, benef=benef)
+    
+    shw = exp_shower(user, hlr.get_dic(), hlr.get_types(), hlr.get_pay_methods())
+    shw.gen_charts()
 
     print ("Content-Type: text/html")
     print("")
@@ -107,18 +113,15 @@ def do_POST(hlr, shw):
     print("<h3> Another Expense ?</h3>")
     
     gen_http_form(hlr.get_types(), hlr.get_pay_methods(), hlr.get_benefs())
-    show_graphs()
+    show_graphs(shw)
     print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_finance.py'\">Edit expenses data</button>")
-
+    
     hlr.save_data()
 
 hlr = exp_handler("all")
-shw = exp_shower(user, hlr.get_dic(), hlr.get_types(), hlr.get_pay_methods())
-
-shw.gen_charts()
 
 if os.environ['REQUEST_METHOD'] == "GET":
-    do_GET(hlr, shw)
+    do_GET(hlr)
 else:
-    do_POST(hlr, shw)
+    do_POST(hlr)
 

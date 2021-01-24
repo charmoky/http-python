@@ -39,11 +39,9 @@ class exp_shower:
    
     def make_arrays(self):
         last_week_delta = datetime.timedelta(days=6)
-        dates = self.dic['Date'].copy()
-        dates.sort()
-        self.last_day = dates[-1]
+        self.last_day = datetime.date.today() 
 
-        for i in range(0, len(dates)):
+        for i in range(0, len(self.dic['Date'])):
             benef = self.dic['Benef'][i]
             if not self.is_benef_tracked(benef):
                 continue
