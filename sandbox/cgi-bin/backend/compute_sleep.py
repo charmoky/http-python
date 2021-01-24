@@ -79,13 +79,18 @@ class sleep_handler:
 
     def gen_graph_last_7days(self):
         len_dic = 7
-        if len(self.dic['Date']) < 7:
-            len_dic = len(self.dic['Date'])
-        last_dates = self.dic['Date'][-len_dic:]
-        last_sleep = self.dic['Sleep'][-len_dic:]
+        last_week_delta = datetime.timedelta(days=6)
+        last_dates = [(self.today - datetime.timedelta(days=i)).strftime("%a") for i in range(6,-1,-1)]
+        last_dates[-1] = "Tod"
+        last_dates[-2] = "Yes"
+        last_sleep = np.zeros(len_dic)
+        for i in range(0, len(self.dic['Date'])):
+            delta = self.today - self.dic['Date'][i]    
+            if delta <= last_week_delta:
+                last_sleep[6-delta.days] += self.dic['Sleep'][i]
         
-        self.mean_sleep = last_sleep.mean()
-        days = [i.strftime("%a") for i in last_dates]
+        self.mean_sleep = np.array([i for i in last_sleep if i != 0]).mean()
+        days = last_dates
         
         x = np.arange(len_dic)
         fig, axs = plt.subplots()
