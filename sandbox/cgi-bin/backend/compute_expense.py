@@ -9,7 +9,7 @@ data_filename = "/Yep/data/exp_data_%s.pckl"
 
 pay_methods = ["Compte Commun", "Cash", "Card Tony", "Card AC", "Cheques Repas"]
 benefs = ["Both", "Tony", "AC"]
-types = ["Groceries", "Car", "Holidays", "Restos", "Fast Food", "Epargne", "Insurance", "Gifts", "Books", "Entertainment", "Actis", "Work", "Drank & Drugs", "Cat", "Extra"]
+types = ["Groceries", "Car", "Holidays", "Restos", "Health", "Telecom", "Fast Food", "Epargne", "Insurance", "Gifts", "Books", "Entertainment", "Actis", "Work", "Drank & Drugs", "Cat", "Extra", "Clothing", "Appart"]
 
 def get_year_month_day(date_str):
     fields = date_str.split('-')

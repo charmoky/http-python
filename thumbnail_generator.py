@@ -25,8 +25,11 @@ class thumb_gen():
                 continue
             
             print("Making thumbnail for {}".format(image))
-            img = Image.open(self.path + image)
-           
+            try:
+                img = Image.open(self.path + image)
+            except:
+                return
+
             try:
                 for orientation in ExifTags.TAGS.keys() : 
                     if ExifTags.TAGS[orientation]=='Orientation' : break 

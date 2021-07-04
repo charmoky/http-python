@@ -61,8 +61,12 @@ def show_graphs(shw):
     print("<h3> Small recap on last 7 days expenses :</h3>")
     print("<img src=\"%s\" alt=\"Last 7 days\" width=\"800\" height=\"600\">" % shw.get_fig_name()[0])
     print("<h3> For this month and year :</h3>")
-    print("<img src=\"%s\" alt=\"Last month\" width=\"800\" height=\"600\">" % shw.get_fig_name()[1])
-    print("<img src=\"%s\" alt=\"Last year\" width=\"800\" height=\"600\">" % shw.get_fig_name()[2])
+    print("<img src=\"%s\" alt=\"Last month\" width=\"50%%\">" % shw.get_fig_name()[1])
+    print("<img src=\"%s\" alt=\"Last year\" width=\"50%%\">" % shw.get_fig_name()[2])
+
+def gen_edit_button():
+    print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_finance.py'\">Edit expenses data</button>")
+    print("""<form action="/sandbox/cgi-bin/rm_colors.py" method="post"><input type="submit" value="Change Colors"></form>""")
 
 def do_GET(hlr):
     shw = exp_shower(user, hlr.get_dic(), hlr.get_types(), hlr.get_pay_methods())
@@ -81,9 +85,8 @@ def do_GET(hlr):
 
     gen_http_form(types_list, method_list, benef_list)
     show_graphs(shw)
+    gen_edit_button()
     
-    print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_finance.py'\">Edit expenses data</button>")
-
     print("""</body>
     </html>""")
 
@@ -114,7 +117,7 @@ def do_POST(hlr):
     
     gen_http_form(hlr.get_types(), hlr.get_pay_methods(), hlr.get_benefs())
     show_graphs(shw)
-    print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_finance.py'\">Edit expenses data</button>")
+    gen_edit_button()
     
     hlr.save_data()
 

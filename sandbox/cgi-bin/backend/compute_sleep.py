@@ -8,7 +8,7 @@ import datetime
 import os
 
 data_filename = "/Yep/data/sleep_data_%s.pckl"
-fig_name = "sandbox/figures/sleep_%s_%s.png"
+fig_name = "sandbox/.figures/tmp_sleep.png"
 
 def get_hour_min(time_str):
     fields = time_str.split(':')
@@ -59,8 +59,7 @@ class sleep_handler:
         toBed_time = datetime.datetime(get_year_month_day(date_bed_str)[0], get_year_month_day(date_bed_str)[1], get_year_month_day(date_bed_str)[2], get_hour_min(time_bed_str)[0], get_hour_min(time_bed_str)[1])
         upBed_time = datetime.datetime(get_year_month_day(date_up_str)[0],  get_year_month_day(date_up_str)[1],  get_year_month_day(date_up_str)[2],  get_hour_min(time_up_str)[0],  get_hour_min(time_up_str)[1])
 
-        # Update today variable with wake up date
-        self.today = datetime.date(get_year_month_day(date_up_str)[0],  get_year_month_day(date_up_str)[1],  get_year_month_day(date_up_str)[2])
+        date = datetime.date(get_year_month_day(date_up_str)[0],  get_year_month_day(date_up_str)[1],  get_year_month_day(date_up_str)[2])
         
         asleep = upBed_time - toBed_time
         self.asleep_hours, self.asleep_minutes = divmod(divmod(asleep.seconds, 60)[0], 60)
@@ -68,11 +67,11 @@ class sleep_handler:
         asleep_stored = self.asleep_hours * 60 + self.asleep_minutes
 
         # If today is already tracked, we don't add a new entry, just add the sleep time
-        if self.today in self.dic['Date']:
-            idx = self.dic['Date'].index(self.today)
+        if date in self.dic['Date']:
+            idx = self.dic['Date'].index(date)
             self.dic['Sleep'][idx] = self.dic['Sleep'][idx] + asleep_stored
         else:
-            self.update_dic('Date', self.today)
+            self.update_dic('Date', date)
             self.update_dic('Asleep', toBed_time)
             self.update_dic('Woke', upBed_time)
             self.dic['Sleep'] = np.append(self.dic['Sleep'], asleep_stored)
@@ -88,8 +87,11 @@ class sleep_handler:
             delta = self.today - self.dic['Date'][i]    
             if delta <= last_week_delta:
                 last_sleep[6-delta.days] += self.dic['Sleep'][i]
+
+        last_non_zero = np.array([i for i in last_sleep if i != 0])
+        if len(last_non_zero) >= 1:
+            self.mean_sleep = last_non_zero.mean()
         
-        self.mean_sleep = np.array([i for i in last_sleep if i != 0]).mean()
         days = last_dates
         
         x = np.arange(len_dic)
@@ -105,12 +107,13 @@ class sleep_handler:
         axs.set_xticks(np.arange(0, len(days)))
         axs.set_xticklabels(days)
         axs.set_xlabel('Day of the week')
-        
-        axs.axhline(y=self.mean_sleep, color='0.5', linestyle='--', label="Avg: %dh%d" % (divmod(self.mean_sleep, 60)))
+       
+        if self.mean_sleep != 0:
+            axs.axhline(y=self.mean_sleep, color='0.5', linestyle='--', label="Avg: %dh%d" % (divmod(self.mean_sleep, 60)))
         
         axs.legend()
         fig.suptitle("Last 7 days sleep time")
-        fig.savefig(fig_name % (self.user, ""), dpi=200)
+        fig.savefig(fig_name, dpi=200)
 
     def get_fig_name(self):
-        return ("/" + fig_name % (self.user, ""))
+        return ("/" + fig_name)

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import cgi
-from backend.compute_expense import exp_handler
+from backend.activity import activity_tracker
+
 import os
 
 import datetime
@@ -12,9 +13,9 @@ if "REMOTE_USER" in os.environ.keys():
 else:
     user = "Anon"
 
-def gen_checkbox(idx, date, amount, benef, exp_type):
+def gen_checkbox(idx, date, act, adder, desciption, link):
     print(f"""<input type="checkbox" id="date_{idx}" name="date_{idx}" value="True">
-    <label for="date_{idx}"> {idx}. {str(date)} : {amount} euros for {benef} on {exp_type}</label><br>""")
+    <label for="date_{idx}"> {idx}. {str(date)} : <a href="{link}>{act}</a> : {desciption} added by {adder}</label><br>""")
 
 def do_GET(hlr):
     dic = hlr.get_dic()
@@ -23,23 +24,23 @@ def do_GET(hlr):
     <html>
     <body>
 
-    <title>Expense Editor</title>
+    <title>Activity Editor</title>
 
     <h2>Hello %s !</h2>
     
     <p> Select the entry(ies) to remove </p>
-    <form action="/sandbox/cgi-bin/edit_finance.py" method="post">""" % (user))
+    <form action="/sandbox/cgi-bin/edit_activity.py" method="post">""" % (user))
     
     oldest_idx = len(dic['Date'])-1
     min_idx = -1
-    #if oldest_idx > 10:
-    #    min_idx = oldest_idx-10
+    if oldest_idx > 10:
+        min_idx = oldest_idx-10
     for i in range(oldest_idx, min_idx, -1):
-        gen_checkbox(i, dic['Date'][i], dic['Amount'][i], dic['Benef'][i], dic['Type'][i])
+        gen_checkbox(i, dic['Date'][i], dic['Activity'][i], dic['Adder'][i], dic['Description'][i], dic['Link'][i])
 
     print("""<input type="submit" value="Submit">
     </form>""")
-    print("<button onclick=\"window.location.href='/sandbox/cgi-bin/handle_finance.py'\">Back to tracker</button>")
+    print("<button onclick=\"window.location.href='/sandbox/cgi-bin/handle_activity.py'\">Back to tracker</button>")
 
     print("""</body>
     </html>""")
@@ -66,7 +67,7 @@ def do_POST(hlr):
     removed = 0
     for idx in idx_to_rm:
         idx_to_remove = idx-removed
-        print(f"<p>Removing date {dic['Date'][idx_to_remove]} : {dic['Type'][idx_to_remove]} {dic['Amount'][idx_to_remove]} {dic['Method'][idx_to_remove]} for {dic['Benef'][idx_to_remove]}</p>")
+        print(f"<p>Removing date {dic['Date'][idx_to_remove]} : {dic['Activity'][idx_to_remove]} added by {dic['Adder'][idx_to_remove]}</p>")
         for key in dic.keys():
             if isinstance(dic[key], list):
                 dic[key].pop(idx_to_remove)
@@ -76,13 +77,13 @@ def do_POST(hlr):
                 raise unexpectedType("Unexpected type !")
         removed += 1
 
-    print("<button onclick=\"window.location.href='/sandbox/cgi-bin/handle_finance.py'\">Back to tracker</button>")
+    print("<button onclick=\"window.location.href='/sandbox/cgi-bin/handle_activity.py'\">Back to tracker</button>")
     print("""</body>
     </html>""")
 
     hlr.save_data(dic=dic)
 
-hlr = exp_handler("all")
+hlr = activity_tracker(user)
 if os.environ['REQUEST_METHOD'] == "GET":
     do_GET(hlr)
 else:

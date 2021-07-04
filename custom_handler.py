@@ -13,10 +13,71 @@ from thumbnail_generator import thumb_gen
 
 img_types = [".gif"]
 comp_imag_types = [".jpg", ".jpeg", ".png"]
-vid_types = [".mp4", ".webm", ".mov"]
+vid_types = [".mp4", ".webm", ".mov", ".avi"]
 
 class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
     cgi_directories = ['/sandbox/cgi-bin']
+    aclµdir_list = ['sandbox/cgi-bin', 'sandbox/private', 'sandbox/shared']
+
+    def check_acl(self):
+        self.user = "anon"
+        path = self.translate_path(self.path)
+        
+        found = False
+        for acl_dir in self.aclµdir_list:
+            if path.find(acl_dir) != -1:
+                found = True
+                break
+
+        if not found:
+            print("Did not find directory in ACL")
+            return True
+        
+        users = []
+        try:
+            print("Opening file " + acl_dir + "/.acl")
+
+            with open(acl_dir + "/.acl", "r") as f:
+                for line in f:
+                    users.append(line.strip())
+        except:
+            print("Parsing users failed !")
+            return False
+        
+        print(users)
+
+        authorization = self.headers.get("authorization")
+        if authorization:
+            authorization = authorization.split()
+            if len(authorization) == 2:
+                import base64, binascii
+                if authorization[0].lower() == "basic":
+                    try:
+                        authorization = authorization[1].encode('ascii')
+                        authorization = base64.decodebytes(authorization).\
+                                decode('ascii')
+                    except (binascii.Error, UnicodeError):
+                        pass
+                    else:
+                        authorization = authorization.split(':')
+                        if len(authorization) == 2:
+                            self.user = authorization[0]
+        
+        if self.user in users:
+            return True
+
+        return False
+
+    def send_head(self):
+        """Version of send_head that support ACL"""
+
+        if self.check_acl():
+            return http.server.CGIHTTPRequestHandler.send_head(self)
+        else:
+            self.send_error(
+                HTTPStatus.UNAUTHORIZED,
+                f"Your user '{self.user}' is not part of the ACL")
+
 
     def is_cgi(self):
         """Test whether self.path corresponds to a CGI script.
@@ -181,7 +242,6 @@ class custom_cgi_handler(http.server.CGIHTTPRequestHandler):
                 os.dup2(self.rfile.fileno(), 0)
                 os.dup2(self.wfile.fileno(), 1)
                 os.execve(scriptfile, args, env)
-                print("End of child")
                 print(self.wfile)
             except:
                 self.server.handle_error(self.request, self.client_address)
@@ -392,14 +452,33 @@ div.desc {
             r.append("<div class=\"row\">")
             r.append("<h2> Video Gallery:</h2>\n")
             for vid in self.vid_list:
+                #r.append("<video controls> <source src=\"{0}\" type=\"video/{1}\"> </video>".format(vid[0].replace(' ', '%20'), vid[1]))
+
+                #if same file exists in mp4, prefer mp4
+                if vid[1] == "mov":
+                    if (vid[0].replace(" ", "_").replace(".mov", ".mp4"), "mp4") in self.vid_list:
+                        continue
+
+                # check if lowres version exists
+                if vid[1] == "mp4":
+                    if (vid[0].replace(".mp4", "_lowres.mp4"), vid[1]) in self.vid_list:
+                        continue
+                    if (vid[0].replace("_lowres.mp4",".mp4"), vid[1]) in self.vid_list:
+                        r.append("""<div class="vid_gallery">""")
+                        r.append("<video controls=\"controls\" preload=\"none\"> <source src=\"{0}\" type={1}>  </video>".format(vid[0].replace(' ', '%20'), vid[1]))
+                        r.append(f"<a href=\"{vid[0]}\" target=\"_blank\" rel=\"noopener noreferrer\">  <div class=\"desc\">%s</div></a>" % vid[0].replace("_lowres.mp4",".mp4"))
+                        r.append("""</div>""")
+                        continue
+
                 r.append("""<div class="vid_gallery">""")
-                r.append("<video controls> <source src=\"{0}\" type=\"video/{1}\"> </video>".format(vid[0], vid[1]))
-                r.append("<div class=\"desc\">%s</div>" % vid[0])
+                r.append("<video controls=\"controls\" preload=\"none\"> <source src=\"{0}\" type={1}>  </video>".format(vid[0].replace(' ', '%20'), vid[1]))
+                r.append(f"<a href=\"{vid[0]}\" target=\"_blank\" rel=\"noopener noreferrer\">  <div class=\"desc\">%s</div></a>" % vid[0])
                 r.append("""</div>""")
             r.append("</div>")
             r.append("<br>")
 
-        r.append('</ul>\n<hr>\n</body>\n</html>\n')
+        r.append('</ul>\n<hr>')
+        r.append('\n</body>\n</html>\n')
         encoded = '\n'.join(r).encode(enc, 'surrogateescape')
         f = io.BytesIO()
         f.write(encoded)
