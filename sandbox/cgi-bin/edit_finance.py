@@ -25,9 +25,10 @@ def do_GET(hlr):
 
     <title>Expense Editor</title>
 
-    <h2>Hello %s !</h2>
+    <h2>Hello %s !</h2>""")
     
-    <p> Select the entry(ies) to remove </p>
+    print("<button onclick=\"window.location.href='/sandbox/cgi-bin/handle_finance.py'\">Back to tracker</button>")
+    print("""<p> Select the entry(ies) to remove </p>
     <form action="/sandbox/cgi-bin/edit_finance.py" method="post">""" % (user))
     
     oldest_idx = len(dic['Date'])-1
