@@ -39,6 +39,7 @@ def gen_http_form(types_list, method_list, benef_list):
     <select name="type" id="type" required>""")
 
     gen_http_select_type(types_list)
+    print("<option value=\"reboursement\"> remboursement</option>")
     print("</select><br>")
 
     print("""
@@ -60,16 +61,32 @@ def gen_http_form(types_list, method_list, benef_list):
 def show_graphs(shw):
     print("<h3> Small recap on last 7 days expenses :</h3>")
     print("<img src=\"%s\" alt=\"Last 7 days\" width=\"800\" height=\"600\">" % shw.get_fig_name()[0])
-    print("<h3> For this month and year :</h3>")
-    print("<img src=\"%s\" alt=\"Last month\" width=\"50%%\">" % shw.get_fig_name()[1])
-    print("<img src=\"%s\" alt=\"Last year\" width=\"50%%\">" % shw.get_fig_name()[2])
+    print("<h3> The bigger picture :</h3>")
+    ac_owes = round(shw.get_owns_what_month("AC", "Tony", 0),2)
+    if ac_owes > 0:
+        print(f"<p> AC owes Tony {ac_owes}e this month </p>")
+    else:
+        print(f"<p> Tony owes AC {-ac_owes}e this month </p>")
+    ac_owes = round(shw.get_owns_what_month("AC", "Tony", 1),2)
+    if ac_owes > 0:
+        print(f"<p> AC owes Tony {ac_owes}e from last month </p>")
+    else:
+        print(f"<p> Tony owes AC {-ac_owes}e from last month </p>")
+    print("<img src=\"%s\" alt=\"This month\" width=\"50%%\">" % shw.get_fig_name()[1])
+    print("<img src=\"%s\" alt=\"Last year\" width=\"50%%\">" % shw.get_fig_name()[3])
+    print("<img src=\"%s\" alt=\"Past 12 months\" width=\"50%%\">" % shw.get_fig_name()[2])
 
-def gen_edit_button():
+def gen_edit_button(dic):
+    print("<h3> Couple of the last entries: </h3>")
+    oldest_idx = len(dic['Date'])-1
+    min_idx = oldest_idx - 20
+    for i in range(oldest_idx, min_idx, -1):
+        print(f"{i} : " + dic['Date'][i].strftime("%d %b %y") + f" : {dic['Amount'][i]}e for {dic['Benef'][i]} on {dic['Type'][i]} with {dic['Method'][i]} <br>")
     print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_finance.py'\">Edit expenses data</button>")
     print("""<form action="/sandbox/cgi-bin/rm_colors.py" method="post"><input type="submit" value="Change Colors"></form>""")
 
 def do_GET(hlr):
-    shw = exp_shower(user, hlr.get_dic(), hlr.get_types(), hlr.get_pay_methods())
+    shw = exp_shower(user, hlr.get_dic(), hlr.get_types(), hlr.get_pay_methods(), hlr.get_benefs())
     shw.gen_charts()
 
     types_list = hlr.get_types()
@@ -85,7 +102,7 @@ def do_GET(hlr):
 
     gen_http_form(types_list, method_list, benef_list)
     show_graphs(shw)
-    gen_edit_button()
+    gen_edit_button(hlr.get_dic())
     
     print("""</body>
     </html>""")
@@ -102,7 +119,7 @@ def do_POST(hlr):
     
     hlr.add_new_exp(date_str=date, amount_float=float(amount), exp_type=exp_type, pay_method=exp_method, benef=benef)
     
-    shw = exp_shower(user, hlr.get_dic(), hlr.get_types(), hlr.get_pay_methods())
+    shw = exp_shower(user, hlr.get_dic(), hlr.get_types(), hlr.get_pay_methods(), hlr.get_benefs())
     shw.gen_charts()
 
     print ("Content-Type: text/html")

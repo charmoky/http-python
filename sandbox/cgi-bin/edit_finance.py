@@ -12,9 +12,9 @@ if "REMOTE_USER" in os.environ.keys():
 else:
     user = "Anon"
 
-def gen_checkbox(idx, date, amount, benef, exp_type):
+def gen_checkbox(idx, date, amount, benef, exp_type, method):
     print(f"""<input type="checkbox" id="date_{idx}" name="date_{idx}" value="True">
-    <label for="date_{idx}"> {idx}. {str(date)} : {amount} euros for {benef} on {exp_type}</label><br>""")
+    <label for="date_{idx}"> {idx}. {str(date)} : {amount} euros for {benef} on {exp_type} with {method}</label><br>""")
 
 def do_GET(hlr):
     dic = hlr.get_dic()
@@ -25,18 +25,18 @@ def do_GET(hlr):
 
     <title>Expense Editor</title>
 
-    <h2>Hello %s !</h2>""")
+    <h2>Hello %s !</h2>""" % (user))
     
     print("<button onclick=\"window.location.href='/sandbox/cgi-bin/handle_finance.py'\">Back to tracker</button>")
     print("""<p> Select the entry(ies) to remove </p>
-    <form action="/sandbox/cgi-bin/edit_finance.py" method="post">""" % (user))
+    <form action="/sandbox/cgi-bin/edit_finance.py" method="post">""")
     
     oldest_idx = len(dic['Date'])-1
     min_idx = -1
     #if oldest_idx > 10:
     #    min_idx = oldest_idx-10
     for i in range(oldest_idx, min_idx, -1):
-        gen_checkbox(i, dic['Date'][i], dic['Amount'][i], dic['Benef'][i], dic['Type'][i])
+        gen_checkbox(i, dic['Date'][i], dic['Amount'][i], dic['Benef'][i], dic['Type'][i], dic['Method'][i])
 
     print("""<input type="submit" value="Submit">
     </form>""")
