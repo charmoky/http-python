@@ -28,6 +28,9 @@ def gen_http_form(types_list, method_list, benef_list):
     today = datetime.datetime.now()
     print("""<form action="/sandbox/cgi-bin/handle_finance.py" method="post">
 
+    <label for="desc">Description :</label>
+    <input type="string" id="esc" name="desc"><br>
+
     <label for="amount">Amount :</label>
     <input type="float" id="amount" name="amount" required><br>
 
@@ -81,7 +84,7 @@ def gen_edit_button(dic):
     oldest_idx = len(dic['Date'])-1
     min_idx = oldest_idx - 20
     for i in range(oldest_idx, min_idx, -1):
-        print(f"{i} : " + dic['Date'][i].strftime("%d %b %y") + f" : {dic['Amount'][i]}e for {dic['Benef'][i]} on {dic['Type'][i]} with {dic['Method'][i]} <br>")
+        print(f"{i} : " + dic['Date'][i].strftime("%d %b %y") + f" : {dic['Amount'][i]}e for {dic['Benef'][i]} on {dic['Type'][i]} with {dic['Method'][i]} {dic['Desc'][i]} <br>")
     print("<br><button onclick=\"window.location.href='/sandbox/cgi-bin/edit_finance.py'\">Edit expenses data</button>")
     print("""<form action="/sandbox/cgi-bin/rm_colors.py" method="post"><input type="submit" value="Change Colors"></form>""")
 
@@ -115,9 +118,10 @@ def do_POST(hlr):
     exp_type = (form.getfirst('type', 'empty'))
     exp_method = (form.getfirst('method', 'empty'))
     benef = (form.getfirst('benef', 'empty'))
+    desc = (form.getfirst('desc', 'empty'))
     amount = (form.getfirst('amount', 'empty')).replace(",",".")
     
-    hlr.add_new_exp(date_str=date, amount_float=float(amount), exp_type=exp_type, pay_method=exp_method, benef=benef)
+    hlr.add_new_exp(date_str=date, amount_float=float(amount), exp_type=exp_type, pay_method=exp_method, benef=benef, desc=desc)
     
     shw = exp_shower(user, hlr.get_dic(), hlr.get_types(), hlr.get_pay_methods(), hlr.get_benefs())
     shw.gen_charts()
@@ -128,13 +132,13 @@ def do_POST(hlr):
     print ("<title>Expense Tracker</title>")
     print ("<h2>New Expense taken into account !</h2>")
     print ("<p>")
-    print ("Spent %.1f euros with %s on %s for %s" % (float(amount), exp_method, exp_type, benef))
+    print ("Spent %.1f euros with %s on %s for %s %s" % (float(amount), exp_method, exp_type, benef, desc))
     print("</p>")
     print("<h3> Another Expense ?</h3>")
     
     gen_http_form(hlr.get_types(), hlr.get_pay_methods(), hlr.get_benefs())
     show_graphs(shw)
-    gen_edit_button()
+    gen_edit_button(hlr.get_dic())
     
     hlr.save_data()
 

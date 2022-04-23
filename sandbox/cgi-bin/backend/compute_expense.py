@@ -9,7 +9,7 @@ data_filename = "/Yep/data/exp_data_%s.pckl"
 
 pay_methods = ["Compte Commun", "Cash", "Card Tony", "Card AC", "Cheques Repas"]
 benefs = ["Both", "Tony", "AC"]
-types = ["Groceries", "Car", "Holidays", "Restos", "Health", "Telecom", "Fast Food", "Epargne", "Insurance", "Gifts", "Books", "Entertainment", "Actis", "Work", "Drank & Drugs", "Cat", "Extra", "Clothing", "Appart", "Public Transport"]
+types = ["Groceries", "Car", "Holidays", "Restos", "Health", "Telecom", "Fast Food", "Epargne", "Insurance", "Gifts", "Books", "Entertainment", "Actis", "Work", "Drank & Drugs", "Cat", "Extra", "Clothing", "Housing", "Public Transport"]
 
 def get_year_month_day(date_str):
     fields = date_str.split('-')
@@ -23,7 +23,7 @@ class exp_handler:
             self.dic = pickle.load(f)
             f.close()
         except IOError:
-            self.dic = {'Date' : [], 'Type' : [], 'Method': [], 'Benef': [], 'Amount' : np.array([])}
+            self.dic = {'Date' : [], 'Type' : [], 'Method': [], 'Benef': [], 'Desc': [], 'Amount' : np.array([])}
 
     def update_dic(self, colname, data):
         self.dic[colname].append(data)
@@ -48,11 +48,12 @@ class exp_handler:
         f.close()
         os.sync()
 
-    def add_new_exp(self, date_str, amount_float, exp_type, pay_method, benef):
+    def add_new_exp(self, date_str, amount_float, exp_type, pay_method, benef, desc=""):
         self.today = datetime.date(get_year_month_day(date_str)[0], get_year_month_day(date_str)[1], get_year_month_day(date_str)[2])
         
         self.update_dic('Date', self.today)
         self.update_dic('Type', exp_type)
         self.update_dic('Method', pay_method)
         self.update_dic('Benef', benef)
+        self.update_dic('Desc', desc)
         self.dic['Amount'] = np.append(self.dic['Amount'], amount_float)

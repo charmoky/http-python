@@ -65,23 +65,36 @@ class exp_shower:
             benef = self.dic['Benef'][i]
             if not self.is_benef_tracked(benef):
                 continue
-    
+   
+            # Skip remboursement types
+            if self.dic['Type'][i] == "reboursement":
+                delta_months = (self.last_day.year - self.dic['Date'][i].year) * 12 + (self.last_day.month - self.dic['Date'][i].month)
+                if delta_months <= 1:
+                    benef_idx = self.benefs.index(benef)-1
+                    if self.dic['Method'][i] != ("Card %s" % benef):
+                        for own in self.benefs:
+                            if self.dic['Method'][i].find("%s" % own) != -1:
+                                break
+                        idx_i = self.benefs.index(own)-1
+                        self.own_matrix_last_2mth[delta_months][benef_idx][idx_i] -= amount
+                continue
+
             type_idx = self.types.index(self.dic['Type'][i])
             meth_idx = self.pay_methods.index(self.dic['Method'][i])
             amount = self.get_amount(self.dic['Amount'][i], benef)
             if self.dic['Date'][i].year == self.last_day.year:
                 self.by_types_yr[type_idx] += amount
                 self.by_method_yr[meth_idx] += amount
-            if self.dic['Date'][i].month == self.last_day.month:
-                self.by_types_mth[type_idx] += amount
-                self.by_method_mth[meth_idx] += amount
+                if self.dic['Date'][i].month == self.last_day.month:
+                    self.by_types_mth[type_idx] += amount
+                    self.by_method_mth[meth_idx] += amount
        
             delta = self.last_day - self.dic['Date'][i]    
             if delta <= last_week_delta:
                 self.last_7days[6-delta.days][type_idx] += amount
 
             delta_months = (self.last_day.year - self.dic['Date'][i].year) * 12 + (self.last_day.month - self.dic['Date'][i].month)
-            if delta_months <= 12:
+            if delta_months < 12:
                 self.last_12_mth[11-delta_months][type_idx] += amount
 
             if delta_months <= 1:
@@ -165,6 +178,31 @@ class exp_shower:
         
         fig.suptitle("Expense of last 12 months : %.2f€" % self.last_12_mth.sum())
         fig.savefig(fig_name % ("12_months"), dpi=200)
+
+    def gen_graphs_last_12months_cat(self, cat):
+        if cat not in self.types:
+            return
+        
+        months_idx = [((self.last_day.month-i) % 12) if ((self.last_day.month-i) % 12) != 0 else 12 for i in range (11,-1,-1)]
+        months = [self.last_day.replace(day=1, month=i).strftime("%b") for i in months_idx]
+
+        ind = np.arange(12)
+        fig, ax = plt.subplots()
+        
+        ax.bar(ind, self.last_12_mth[:,self.types.index(cat)].tolist())
+        
+        mean = self.last_12_mth[:,self.types.index(cat)].mean()
+        ax.axhline(y=mean, color='0.5', linestyle='--', label="Avg: %.2f€" % mean)
+            
+        ax.legend()
+        ax.set_xticks(np.arange(0, len(months)))
+        ax.set_xticklabels(months)
+        ax.set_ylabel("Amount €")
+        ax.set_xlabel('Previous Months')
+        
+        fig.suptitle("Expense of last 12 months : %.2f€ for %s" % (self.last_12_mth[:,self.types.index(cat)].sum(), cat))
+        fig_name_ext = "12_months_%s" % cat
+        fig.savefig(fig_name % fig_name_ext, dpi=200)
 
     def gen_pie_charts(self, data, labels, colors, fig_title, fig_filename):
         norm_data = data

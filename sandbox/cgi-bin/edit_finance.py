@@ -12,9 +12,9 @@ if "REMOTE_USER" in os.environ.keys():
 else:
     user = "Anon"
 
-def gen_checkbox(idx, date, amount, benef, exp_type, method):
+def gen_checkbox(idx, date, amount, benef, exp_type, method, desc=""):
     print(f"""<input type="checkbox" id="date_{idx}" name="date_{idx}" value="True">
-    <label for="date_{idx}"> {idx}. {str(date)} : {amount} euros for {benef} on {exp_type} with {method}</label><br>""")
+    <label for="date_{idx}"> {idx}.  {str(date)} : {amount} euros for {benef} on {exp_type} with {method} {desc}</label><br>""")
 
 def do_GET(hlr):
     dic = hlr.get_dic()
@@ -35,8 +35,9 @@ def do_GET(hlr):
     min_idx = -1
     #if oldest_idx > 10:
     #    min_idx = oldest_idx-10
+    print("""<input type="submit" value="Submit"><br><br>""")
     for i in range(oldest_idx, min_idx, -1):
-        gen_checkbox(i, dic['Date'][i], dic['Amount'][i], dic['Benef'][i], dic['Type'][i], dic['Method'][i])
+        gen_checkbox(i, dic['Date'][i], dic['Amount'][i], dic['Benef'][i], dic['Type'][i], dic['Method'][i], dic['Desc'][i])
 
     print("""<input type="submit" value="Submit">
     </form>""")
@@ -67,7 +68,7 @@ def do_POST(hlr):
     removed = 0
     for idx in idx_to_rm:
         idx_to_remove = idx-removed
-        print(f"<p>Removing date {dic['Date'][idx_to_remove]} : {dic['Type'][idx_to_remove]} {dic['Amount'][idx_to_remove]} {dic['Method'][idx_to_remove]} for {dic['Benef'][idx_to_remove]}</p>")
+        print(f"<p>Removing {dic['Desc'][idx_to_remove]} date {dic['Date'][idx_to_remove]} : {dic['Type'][idx_to_remove]} {dic['Amount'][idx_to_remove]} {dic['Method'][idx_to_remove]} for {dic['Benef'][idx_to_remove]}</p>")
         for key in dic.keys():
             if isinstance(dic[key], list):
                 dic[key].pop(idx_to_remove)
