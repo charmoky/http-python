@@ -416,6 +416,15 @@ div.desc {
 
         r.append('<title>%s</title>\n</head>' % title)
         r.append('<body>\n<h1>%s</h1>' % title)
+        r.append("""<form id="uploadbanner" enctype="multipart/form-data" method="post" action="/sandbox/cgi-bin/save_file.py">
+<input id="fileupload" name="filename" type="file" multiple/>
+<input id="filepath" name="file_path" type=hidden value="%s"/>
+<input type="submit" value="submit" id="submit" />
+</form>
+<div id="feedback"></div>
+<label id="progress-label" for="progress"></label>
+<progress id="progress" value="0" max="100"> </progress>
+""" % displaypath)
         r.append('<hr>\n<ul>')
 
         r.append("<div class=\"row\">")
@@ -479,6 +488,33 @@ div.desc {
 
         r.append('</ul>\n<hr>')
         r.append('\n</body>\n</html>\n')
+        r.append("""<script>
+
+    const fileUploader = document.getElementById('fileupload');
+    const feedback = document.getElementById('feedback');
+    const progress = document.getElementById('progress');
+
+    const reader = new FileReader();
+
+    fileUploader.addEventListener('change', (event) => {
+        const files = event.target.files;
+        const file = files[0];
+        reader.readAsDataURL(file);
+
+        reader.addEventListener('progress', (event) => {
+            if (event.loaded && event.total) {
+                const percent = (event.loaded / event.total) * 100;
+                progress.value = percent;
+                document.getElementById('progress-label').innerHTML = Math.round(percent) + '%';
+
+                if (percent === 100) {
+                    let msg = `<span style="color:green;">File <u><b>${file.name}</b></u> has been uploaded successfully.</span>`;
+                    feedback.innerHTML = msg;
+                }
+            }
+        });
+    });
+</script>""")
         encoded = '\n'.join(r).encode(enc, 'surrogateescape')
         f = io.BytesIO()
         f.write(encoded)

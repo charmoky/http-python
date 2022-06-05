@@ -93,6 +93,14 @@ class Index_Generator:
 
         f.write("""<body>
         <h1>Index of %s</h1>
+
+        <form method=”post” enctype=”multipart/form-data”>
+        <label for=”file_upload”> File upload </label>
+        <input type=”file” id=”file_upload” name=”file_upload” multiple>
+        </div>
+        <button>Upload</button>
+        </div>
+        </form>
         """ % (web_relative))
 
         f.write("""<hr>
